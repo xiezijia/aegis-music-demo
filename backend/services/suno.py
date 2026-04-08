@@ -9,15 +9,26 @@ from pathlib import Path
 from curl_cffi.requests import AsyncSession
 
 PROVIDER  = os.getenv("SUNO_PROVIDER", "browser")
-# Mock URLs 使用 Suno CDN（有 CORS: Access-Control-Allow-Origin: *）
-# 这些是真实生成的曲目，浏览器可以直接播放
-MOCK_URLS = [
-    "https://cdn1.suno.ai/c185e44b-3263-4900-9de5-5005d25082eb.mp3",  # 故人寄秋声 古风
-    "https://cdn1.suno.ai/2c6b68a4-7a80-4a33-8e71-6cfd93222c23.mp3",  # 枯叶过桥 古风
-    "https://cdn1.suno.ai/8d6b2ff1-2d71-410d-91d4-08c92e656d5f.mp3",  # 秋意 古风
+# Mock URLs — Suno CDN（有 CORS: Access-Control-Allow-Origin: *）
+# 演示模式下按关键词匹配，让不同输入返回不同 URL（内容仍是示例音频）
+_MOCK_GENRE_MAP = [
+    # (关键词列表,  audio_url)
+    (["古风","民族","古筝","二胡","琵琶","箫","笛","国风","传统"],
+     "https://cdn1.suno.ai/c185e44b-3263-4900-9de5-5005d25082eb.mp3"),   # 故人寄秋声
+    (["流行","pop","欢快","现代","轻快","清新","钢琴","吉他","爱情"],
+     "https://cdn1.suno.ai/2c6b68a4-7a80-4a33-8e71-6cfd93222c23.mp3"),   # 枯叶过桥
+    # default — 其余风格（摇滚/电子/爵士/死亡金属等）
 ]
-import random
-MOCK_URL = MOCK_URLS[0]
+_MOCK_DEFAULT_URL = "https://cdn1.suno.ai/8d6b2ff1-2d71-410d-91d4-08c92e656d5f.mp3"
+
+def _pick_mock_url(prompt: str, style: str) -> str:
+    combined = (prompt + " " + (style or "")).lower()
+    for keywords, url in _MOCK_GENRE_MAP:
+        if any(k in combined for k in keywords):
+            return url
+    return _MOCK_DEFAULT_URL
+
+MOCK_URL = _MOCK_DEFAULT_URL  # 向后兼容
 AUTH_FILE = Path(__file__).parent.parent / "suno_auth.json"
 
 BASE_URL  = "https://studio-api-prod.suno.com"
@@ -169,7 +180,7 @@ def get_token() -> str:
 async def generate_music(prompt: str, style: str = "", lyrics: str = "") -> dict:
     if PROVIDER == "mock":
         await asyncio.sleep(2)
-        return {"audio_url": random.choice(MOCK_URLS), "task_id": "mock-001", "title": ""}
+        return {"audio_url": _pick_mock_url(prompt, style), "task_id": "mock-001", "title": ""}
     if PROVIDER == "goapi":
         return await _goapi_generate(prompt, style, lyrics)
     return await _direct_generate(prompt, style, lyrics)

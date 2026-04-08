@@ -43,6 +43,9 @@
           <span v-if="generating" class="spinner" style="width:16px;height:16px;border-width:2px;"></span>
           <span v-else>🎵 AEGIS 开始创作</span>
         </button>
+        <div v-if="isMockMode" class="mock-badge">
+          🎭 演示模式 — 返回固定示例音频，内容与输入风格无关
+        </div>
       </form>
 
       <div v-if="generating" class="generating-overlay">
@@ -95,11 +98,21 @@
 
 <script setup>
 import { ref, computed, inject, onMounted } from 'vue'
+import axios from 'axios'
 import TrackCard from '../components/TrackCard.vue'
 import { useMusicStore } from '../stores/music.js'
 
 const music   = useMusicStore()
 const toast   = inject('toast')
+const isMockMode = ref(false)
+
+onMounted(async () => {
+  music.fetchMyTracks()
+  try {
+    const { data } = await axios.get('/api/config')
+    isMockMode.value = data.suno_provider === 'mock'
+  } catch { isMockMode.value = false }
+})
 
 const form = ref({ title: '', prompt: '', style: '', lyrics: '' })
 const generating  = ref(false)
@@ -129,6 +142,10 @@ function remixTrack(t)   { lastTrack.value = t; form.value.parent_id = t.id; toa
 function clearBase()     { lastTrack.value = null; form.value.parent_id = null }
 
 async function generate() {
+  // title 为空时自动用 prompt 前 15 字填充，避免遗留上次的旧标题
+  if (!form.value.title.trim()) {
+    form.value.title = form.value.prompt.slice(0, 15)
+  }
   generating.value = true
   try {
     const payload = { ...form.value, parent_id: lastTrack.value?.id || null }
@@ -137,6 +154,8 @@ async function generate() {
     const result = await music.pollStatus(track_id)
     currentTrack.value = { ...currentTrack.value, ...result }
     await music.fetchMyTracks()
+    // 成功后清空 title，防止下次生成沿用旧标题
+    form.value.title = ''
     toast('✓ 创作完成！', 'success')
   } catch (e) {
     toast('生成失败：' + e.message, 'error')
@@ -152,7 +171,7 @@ async function submitIt() {
   toast('已提交给老师', 'success')
 }
 
-onMounted(() => music.fetchMyTracks())
+// onMounted 已在顶部定义（含 config 拉取）
 </script>
 
 <style scoped>
@@ -194,6 +213,7 @@ onMounted(() => music.fetchMyTracks())
 .btn-clear:hover { color: #F87171; }
 
 .generate-btn { width: 100%; justify-content: center; padding: 0.75rem; font-size: 0.95rem; margin-top: 0.5rem; }
+.mock-badge { margin-top: 0.5rem; padding: 0.35rem 0.7rem; border-radius: 4px; font-size: 0.7rem; color: var(--amber); background: rgba(232,118,58,0.08); border: 1px dashed rgba(232,118,58,0.4); text-align: center; }
 
 .generating-overlay {
   position: absolute; inset: 0; background: rgba(6,15,30,0.92);

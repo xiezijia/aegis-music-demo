@@ -35,3 +35,9 @@ async def root():
         "suno_token": "active" if t else "no token",
         "token_preview": t[:20] + "..." if t else "",
     }
+
+@app.get("/api/config")
+async def config():
+    """前端读取运行时配置（如是否 mock 模式）"""
+    import os
+    return {"suno_provider": os.getenv("SUNO_PROVIDER", "browser")}
