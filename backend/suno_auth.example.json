@@ -1,0 +1,7 @@
+{
+  "sessionid": "your_django_session_id",
+  "session_token": "eyJ...your_clerk_jwt...",
+  "client_token": "eyJ...your_clerk_client_token...",
+  "cookie_str": "sessionid=xxx; __session=eyJ...; __client_uat=1234567890",
+  "_comment": "Run setup.py to auto-populate from your Chrome browser"
+}

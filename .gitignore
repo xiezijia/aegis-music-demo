@@ -1,0 +1,47 @@
+# ── Secrets & credentials (NEVER commit) ──
+backend/.env
+backend/suno_auth.json
+backend/suno_session.json
+frontend/suno_session.json
+
+# ── Database ──
+backend/*.db
+backend/*.db-shm
+backend/*.db-wal
+
+# ── Python ──
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+.venv/
+venv/
+env/
+dist/
+build/
+*.egg-info/
+
+# ── Node.js ──
+node_modules/
+frontend/dist/
+frontend/.vite/
+
+# ── Playwright artifacts ──
+frontend/.playwright-cli/
+**/*.png
+**/*.trace
+**/*.network
+**/*.har
+
+# ── Patch scripts (local use only) ──
+~/suno_*.py
+
+# ── macOS ──
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# ── Logs ──
+*.log
+/tmp/
