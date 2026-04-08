@@ -189,6 +189,8 @@ async def generate_music(prompt: str, style: str = "", lyrics: str = "") -> dict
     if PROVIDER == "mock":
         await asyncio.sleep(2)
         return {"audio_url": _pick_mock_url(prompt, style), "task_id": "mock-001", "title": ""}
+    if PROVIDER == "sunoapi":
+        return await _sunoapi_generate(prompt, style, lyrics)
     if PROVIDER == "goapi":
         return await _goapi_generate(prompt, style, lyrics)
     return await _direct_generate(prompt, style, lyrics)
@@ -277,6 +279,80 @@ async def _direct_generate(prompt: str, style: str, lyrics: str) -> dict:
                 print(f"  poll error: {e}")
 
     raise TimeoutError("Suno generation timed out after 3 min")
+
+
+
+async def _sunoapi_generate(prompt: str, style: str, lyrics: str) -> dict:
+    """
+    sunoapi.org 第三方代理，真实调用 Suno 生成音乐。
+    字段路径：data.response.sunoData[0].sourceAudioUrl
+    """
+    key = os.getenv("SUNOAPI_KEY", "")
+    if not key:
+        raise RuntimeError("SUNOAPI_KEY 未设置，请在 backend/.env 中添加")
+
+    headers = {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}
+
+    # 有歌词 → customMode（精确控制）；无歌词 → 描述模式（Suno 自动处理）
+    has_lyrics = bool((lyrics or "").strip())
+    if has_lyrics:
+        payload = {
+            "prompt": lyrics,
+            "customMode": True,
+            "style": style or "pop",
+            "title": prompt[:80],
+            "instrumental": False,
+            "model": "V4_5",
+            "callBackUrl": "https://example.com/callback",
+        }
+    else:
+        payload = {
+            "prompt": prompt + (f"，{style}" if style else ""),
+            "customMode": False,
+            "instrumental": True,
+            "model": "V4_5",
+            "callBackUrl": "https://example.com/callback",
+        }
+
+    async with AsyncSession(impersonate="chrome110") as s:
+        # 提交生成任务
+        r = await s.post("https://api.sunoapi.org/api/v1/generate",
+            json=payload, headers=headers, timeout=30)
+        r.raise_for_status()
+        resp = r.json()
+        if resp.get("code") != 200:
+            raise RuntimeError(f"sunoapi error: {resp.get('msg')}")
+
+        task_id = resp["data"]["taskId"]
+        print(f"🎵 sunoapi task submitted: {task_id}")
+
+        # 轮询结果（最多 3 分钟）
+        for tick in range(36):
+            await asyncio.sleep(5)
+            poll = await s.get(
+                f"https://api.sunoapi.org/api/v1/generate/record-info?taskId={task_id}",
+                headers=headers, timeout=15)
+            pdata = poll.json().get("data", {})
+            status = pdata.get("status", "")
+            print(f"  [{(tick+1)*5}s] status={status}")
+
+            if status == "SUCCESS":
+                clips = pdata.get("response", {}).get("sunoData", [])
+                if clips:
+                    clip = clips[0]
+                    # 优先用 Suno 官方 CDN（有 CORS），fallback 到代理 URL
+                    audio_url = clip.get("sourceAudioUrl") or clip.get("audioUrl", "")
+                    print(f"✅ Done: '{clip.get('title','')}' → {audio_url[:60]}")
+                    return {
+                        "audio_url": audio_url,
+                        "task_id":   clip.get("id", task_id),
+                        "title":     clip.get("title", prompt[:30]),
+                        "image_url": clip.get("sourceImageUrl") or clip.get("imageUrl", ""),
+                    }
+            elif status in ("FAILED", "ERROR"):
+                raise RuntimeError(f"sunoapi generation failed: {pdata.get('errorMessage','')}")
+
+    raise TimeoutError("sunoapi generation timed out after 3 min")
 
 
 async def _goapi_generate(prompt: str, style: str, lyrics: str) -> dict:
