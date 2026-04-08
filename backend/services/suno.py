@@ -9,17 +9,25 @@ from pathlib import Path
 from curl_cffi.requests import AsyncSession
 
 PROVIDER  = os.getenv("SUNO_PROVIDER", "browser")
-# Mock URLs — Suno CDN（有 CORS: Access-Control-Allow-Origin: *）
-# 演示模式下按关键词匹配，让不同输入返回不同 URL（内容仍是示例音频）
+# ── Mock URL 映射表 ────────────────────────────────────────────
+# 演示模式：按关键词选不同 CDN 音频，让风格之间有明显差异
+# 所有 URL 均有 CORS: Access-Control-Allow-Origin: *，可在浏览器直接播放
 _MOCK_GENRE_MAP = [
-    # (关键词列表,  audio_url)
-    (["古风","民族","古筝","二胡","琵琶","箫","笛","国风","传统"],
-     "https://cdn1.suno.ai/c185e44b-3263-4900-9de5-5005d25082eb.mp3"),   # 故人寄秋声
-    (["流行","pop","欢快","现代","轻快","清新","钢琴","吉他","爱情"],
-     "https://cdn1.suno.ai/2c6b68a4-7a80-4a33-8e71-6cfd93222c23.mp3"),   # 枯叶过桥
-    # default — 其余风格（摇滚/电子/爵士/死亡金属等）
+    # 古风 / 民族 / 国风
+    (["古风","民族","古筝","二胡","琵琶","箫","笛","国风","传统","山水","水墨","禅"],
+     "https://cdn1.suno.ai/c185e44b-3263-4900-9de5-5005d25082eb.mp3"),
+    # 摇滚 / 金属 / 重型 / 朋克
+    (["摇滚","rock","metal","金属","重金属","朋克","punk","死亡","硬核","hardcore","grunge","浴火","激烈","燃"],
+     "https://cdn1.suno.ai/ab43478c-dcba-4c6f-be86-9c51bc679699.mp3"),   # Numb Like This（暗系摇滚）
+    # 电子 / 舞曲 / EDM / 现代
+    (["电子","edm","dance","舞曲","电","合成器","synth","赛博","cyberpunk","夜店","dj"],
+     "https://cdn1.suno.ai/38574285-b6c3-44d0-9a5d-61dfa8ec39b2.mp3"),   # Numb on the Dance Floor（EDM）
+    # 流行 / 欢快 / 情歌
+    (["流行","pop","欢快","轻快","清新","爱情","温柔","抒情","浪漫","钢琴","吉他","现代"],
+     "https://cdn1.suno.ai/2c6b68a4-7a80-4a33-8e71-6cfd93222c23.mp3"),
 ]
-_MOCK_DEFAULT_URL = "https://cdn1.suno.ai/8d6b2ff1-2d71-410d-91d4-08c92e656d5f.mp3"
+# 默认（爵士、古典、说唱、其他）
+_MOCK_DEFAULT_URL = "https://cdn1.suno.ai/3043302b-555f-4086-a875-4200f7ec5a53.mp3"  # 小小肉
 
 def _pick_mock_url(prompt: str, style: str) -> str:
     combined = (prompt + " " + (style or "")).lower()
