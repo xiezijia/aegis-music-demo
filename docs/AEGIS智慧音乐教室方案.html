@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AEGIS 智慧音乐教室 · 建设方案</title>
+<style>
+/* ─── Reset & Base ─── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 100%; height: 100%; overflow: hidden; background: #020810; }
+
+/* ─── CSS Variables ─── */
+:root {
+  --gold: #D4A843;
+  --gold-light: #F0C85A;
+  --gold-dim: rgba(212,168,67,0.18);
+  --amber: #E8763A;
+  --navy: #020810;
+  --navy2: #060F1E;
+  --navy3: #0A1628;
+  --blue-mid: #0D2040;
+  --blue-bright: #1A3A6B;
+  --text-primary: #F0EDE8;
+  --text-secondary: #A8B4C8;
+  --text-muted: #5A6880;
+  --border: rgba(212,168,67,0.2);
+  --border-bright: rgba(212,168,67,0.5);
+  --slide-w: 100vw;
+  --slide-h: 100dvh;
+}
+
+/* ─── Slide Container ─── */
+.deck { position: relative; width: 100vw; height: 100dvh; overflow: hidden; }
+
+.slide {
+  position: absolute; inset: 0;
+  width: 100%; height: 100dvh; height: 100vh;
+  overflow: hidden;
+  display: flex; flex-direction: column; justify-content: center; align-items: center;
+  padding: clamp(1.5rem, 4vw, 4rem) clamp(2rem, 6vw, 8rem);
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.6s ease, transform 0.6s ease;
+  transform: translateY(30px);
+}
+.slide.active {
+  opacity: 1; pointer-events: all; transform: translateY(0);
+}
+.slide.exit-up { transform: translateY(-30px); opacity: 0; }
+
+/* ─── Background ─── */
+.bg-base {
+  position: fixed; inset: 0; z-index: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 20%, rgba(26,58,107,0.35) 0%, transparent 70%),
+    radial-gradient(ellipse 60% 80% at 80% 80%, rgba(212,168,67,0.08) 0%, transparent 60%),
+    linear-gradient(160deg, #020810 0%, #040D1C 50%, #020810 100%);
+}
+.grid-lines {
+  position: fixed; inset: 0; z-index: 0;
+  background-image:
+    linear-gradient(rgba(212,168,67,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(212,168,67,0.04) 1px, transparent 1px);
+  background-size: 60px 60px;
+}
+
+/* ─── Waveform animation (Slide 1) ─── */
+.waveform-bg {
+  position: absolute; bottom: 0; left: 0; right: 0; height: 200px; z-index: 1;
+  display: flex; align-items: flex-end; justify-content: center; gap: 3px;
+  padding: 0 2rem;
+}
+.wave-bar {
+  width: 4px; border-radius: 2px 2px 0 0;
+  background: linear-gradient(to top, var(--gold), rgba(212,168,67,0.1));
+  animation: wavePulse var(--dur, 1.5s) ease-in-out infinite alternate;
+  animation-delay: var(--delay, 0s);
+}
+@keyframes wavePulse {
+  from { height: var(--min-h, 8px); opacity: 0.3; }
+  to   { height: var(--max-h, 80px); opacity: 0.8; }
+}
+
+/* ─── Floating notes ─── */
+.notes-bg {
+  position: absolute; inset: 0; z-index: 1; pointer-events: none; overflow: hidden;
+}
+.note {
+  position: absolute;
+  color: var(--gold);
+  font-size: clamp(0.8rem, 2vw, 1.4rem);
+  opacity: 0;
+  animation: floatNote var(--fn-dur, 8s) linear infinite;
+  animation-delay: var(--fn-delay, 0s);
+}
+@keyframes floatNote {
+  0%   { opacity: 0; transform: translateY(100vh) rotate(0deg); }
+  10%  { opacity: 0.15; }
+  90%  { opacity: 0.1; }
+  100% { opacity: 0; transform: translateY(-20vh) rotate(360deg); }
+}
+
+/* ─── Typography ─── */
+.slide-title {
+  font-size: clamp(1.4rem, 3.5vw, 2.8rem);
+  font-weight: 700;
+  color: var(--gold);
+  text-align: center;
+  letter-spacing: 0.05em;
+  margin-bottom: clamp(1rem, 2.5vh, 2rem);
+  position: relative; z-index: 2;
+}
+.slide-title::after {
+  content: '';
+  display: block;
+  width: 60px; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  margin: 0.6rem auto 0;
+}
+.slide-subtitle {
+  font-size: clamp(0.85rem, 1.8vw, 1.3rem);
+  color: var(--text-secondary);
+  text-align: center;
+  letter-spacing: 0.08em;
+}
+
+/* ─── Slide 1: Cover ─── */
+#s1 { background: transparent; }
+#s1 .cover-inner { text-align: center; position: relative; z-index: 2; }
+#s1 .cover-title {
+  font-size: clamp(1.8rem, 5vw, 4.5rem);
+  font-weight: 900;
+  line-height: 1.2;
+  background: linear-gradient(135deg, #F5E6B0 0%, var(--gold) 40%, var(--amber) 80%, #F5E6B0 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  letter-spacing: 0.02em;
+  margin-bottom: 1.5rem;
+}
+#s1 .cover-sub {
+  font-size: clamp(0.9rem, 2vw, 1.4rem);
+  color: var(--text-secondary);
+  letter-spacing: 0.15em;
+  border: 1px solid var(--border);
+  display: inline-block;
+  padding: 0.5rem 2rem;
+  border-radius: 2px;
+  background: rgba(212,168,67,0.05);
+  margin-bottom: 2.5rem;
+}
+#s1 .cover-brand {
+  font-size: clamp(0.75rem, 1.2vw, 0.95rem);
+  color: var(--text-muted);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+#s1 .cover-brand span { color: var(--gold-light); }
+
+/* ─── Cards ─── */
+.cards-row {
+  display: flex; gap: clamp(1rem, 2vw, 2rem);
+  width: 100%; max-width: 1100px;
+  position: relative; z-index: 2;
+}
+.card {
+  flex: 1;
+  background: rgba(10,22,40,0.8);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: clamp(1rem, 2.5vw, 1.8rem);
+  position: relative; overflow: hidden;
+  transition: border-color 0.3s, transform 0.3s;
+}
+.card:hover { border-color: var(--border-bright); transform: translateY(-3px); }
+.card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  opacity: 0.6;
+}
+.card-icon { font-size: clamp(1.5rem, 3vw, 2rem); margin-bottom: 0.6rem; }
+.card-label {
+  font-size: clamp(0.8rem, 1.4vw, 1rem);
+  font-weight: 700; color: var(--gold); margin-bottom: 0.4rem;
+  letter-spacing: 0.05em;
+}
+.card-desc {
+  font-size: clamp(0.7rem, 1.2vw, 0.88rem);
+  color: var(--text-secondary); line-height: 1.6;
+}
+
+/* ─── Slide 3: Architecture ─── */
+.arch-wrap {
+  display: flex; gap: 0; align-items: stretch;
+  width: 100%; max-width: 1100px;
+  border: 1px solid var(--border);
+  border-radius: 10px; overflow: hidden;
+  position: relative; z-index: 2;
+  background: rgba(6,15,30,0.9);
+}
+.arch-col {
+  flex: 1; padding: clamp(1rem, 2vw, 1.8rem);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+}
+.arch-col:last-child { border-right: none; }
+.arch-col.center {
+  background: linear-gradient(180deg, rgba(212,168,67,0.08) 0%, rgba(212,168,67,0.03) 100%);
+  border-left: 1px solid var(--border-bright);
+  border-right: 1px solid var(--border-bright);
+}
+.arch-col-title {
+  font-size: clamp(0.75rem, 1.3vw, 0.95rem);
+  font-weight: 700; letter-spacing: 0.1em;
+  margin-bottom: 0.8rem; padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
+}
+.arch-col:not(.center) .arch-col-title { color: var(--text-secondary); }
+.arch-col.center .arch-col-title { color: var(--gold); text-align: center; }
+.arch-item {
+  font-size: clamp(0.68rem, 1.1vw, 0.82rem);
+  color: var(--text-secondary);
+  padding: 0.35rem 0;
+  display: flex; align-items: center; gap: 0.5rem;
+}
+.arch-item::before { content: '·'; color: var(--gold); font-size: 1.2em; }
+.arch-col.center .arch-item {
+  justify-content: center; color: var(--text-primary);
+  background: rgba(212,168,67,0.06);
+  border-radius: 4px; padding: 0.4rem 0.6rem; margin-bottom: 0.3rem;
+}
+.arch-col.center .arch-item::before { display: none; }
+.arch-bottom {
+  text-align: center; margin-top: clamp(0.8rem, 1.5vh, 1.2rem);
+  font-size: clamp(0.7rem, 1.2vw, 0.85rem);
+  color: var(--gold); letter-spacing: 0.1em;
+  position: relative; z-index: 2;
+}
+
+/* ─── Flow steps ─── */
+.flow-section { width: 100%; max-width: 1100px; margin-bottom: clamp(0.6rem, 1.5vh, 1rem); position: relative; z-index: 2; }
+.flow-label {
+  font-size: clamp(0.65rem, 1.1vw, 0.8rem);
+  letter-spacing: 0.15em; font-weight: 700;
+  padding: 0.25rem 0.8rem; border-radius: 3px;
+  display: inline-block; margin-bottom: 0.5rem;
+}
+.flow-label.student { background: rgba(26,58,107,0.5); color: #6EB5FF; border: 1px solid rgba(110,181,255,0.3); }
+.flow-label.teacher { background: rgba(212,168,67,0.1); color: var(--gold); border: 1px solid var(--border); }
+
+.flow-steps {
+  display: flex; align-items: flex-start; gap: 0; overflow: hidden;
+  background: rgba(6,15,30,0.8); border: 1px solid var(--border); border-radius: 8px;
+}
+.flow-steps.teacher-flow { border-color: var(--border-bright); }
+.flow-step {
+  flex: 1; padding: clamp(0.5rem, 1.2vw, 0.9rem) clamp(0.4rem, 0.8vw, 0.7rem);
+  text-align: center; position: relative;
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; align-items: center; gap: 0.3rem;
+}
+.flow-step:last-child { border-right: none; }
+.flow-step-num {
+  width: clamp(20px, 2.5vw, 28px); height: clamp(20px, 2.5vw, 28px);
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-size: clamp(0.6rem, 1vw, 0.75rem); font-weight: 700;
+  flex-shrink: 0;
+}
+.student-flow .flow-step-num { background: rgba(26,58,107,0.6); color: #6EB5FF; border: 1px solid rgba(110,181,255,0.4); }
+.teacher-flow .flow-step-num { background: var(--gold-dim); color: var(--gold); border: 1px solid var(--border-bright); }
+.flow-step-text {
+  font-size: clamp(0.58rem, 1vw, 0.75rem);
+  color: var(--text-secondary); line-height: 1.35; text-align: center;
+}
+.flow-step-sub {
+  font-size: clamp(0.52rem, 0.8vw, 0.65rem);
+  color: var(--text-muted); line-height: 1.3; text-align: center;
+}
+.flow-arrow {
+  display: none;
+}
+/* Arrow between steps via pseudo */
+.flow-step:not(:last-child)::after {
+  content: '→';
+  position: absolute; right: -1px; top: 50%; transform: translateY(-50%);
+  color: var(--text-muted); font-size: 0.7rem;
+  z-index: 3;
+  background: rgba(6,15,30,0.9);
+  width: 18px; height: 18px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 50%;
+}
+
+.highlight-box {
+  background: rgba(212,168,67,0.06);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: clamp(0.6rem, 1.5vw, 1rem) clamp(0.8rem, 2vw, 1.2rem);
+  position: relative; z-index: 2;
+  width: 100%; max-width: 1100px;
+}
+.highlight-item {
+  font-size: clamp(0.65rem, 1.1vw, 0.8rem);
+  color: var(--text-secondary);
+  padding: 0.2rem 0;
+  display: flex; align-items: flex-start; gap: 0.5rem;
+}
+.highlight-item .hi { color: var(--gold); flex-shrink: 0; }
+
+/* ─── Slide 5 ─── */
+.s5-grid {
+  display: grid; grid-template-columns: 1fr 2fr; gap: clamp(1rem, 2.5vw, 2.5rem);
+  width: 100%; max-width: 1100px; position: relative; z-index: 2;
+}
+.voice-steps {
+  display: flex; flex-direction: column; gap: 0.5rem;
+}
+.voice-step {
+  display: flex; align-items: flex-start; gap: 0.7rem;
+  padding: 0.6rem 0.8rem;
+  background: rgba(6,15,30,0.8); border: 1px solid var(--border); border-radius: 6px;
+}
+.voice-step-num {
+  width: 24px; height: 24px; border-radius: 50%;
+  background: rgba(26,58,107,0.6); color: #6EB5FF;
+  border: 1px solid rgba(110,181,255,0.4);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.7rem; font-weight: 700; flex-shrink: 0;
+}
+.voice-step-text { font-size: clamp(0.65rem, 1.1vw, 0.8rem); color: var(--text-secondary); line-height: 1.4; }
+
+.report-card {
+  background: rgba(6,15,30,0.9);
+  border: 1px solid var(--border-bright);
+  border-radius: 8px; overflow: hidden;
+}
+.report-card-header {
+  padding: 0.6rem 1rem;
+  background: linear-gradient(90deg, rgba(212,168,67,0.12), rgba(212,168,67,0.04));
+  border-bottom: 1px solid var(--border);
+  font-size: clamp(0.68rem, 1.1vw, 0.82rem);
+  font-weight: 700; color: var(--gold); letter-spacing: 0.08em;
+  display: flex; align-items: center; gap: 0.5rem;
+}
+.report-card-body { padding: 0.8rem 1rem; display: flex; flex-direction: column; gap: 0.5rem; }
+.report-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0.4rem 0.6rem;
+  background: rgba(10,22,40,0.6); border-radius: 4px;
+}
+.report-row-label { font-size: clamp(0.62rem, 1vw, 0.75rem); color: var(--text-secondary); }
+.report-row-val { font-size: clamp(0.62rem, 1vw, 0.75rem); color: var(--text-primary); font-weight: 600; }
+.badge-green { color: #4ADE80; font-size: 0.8em; }
+.ai-suggest {
+  margin-top: 0.3rem; padding: 0.5rem 0.7rem;
+  background: rgba(212,168,67,0.06);
+  border-left: 2px solid var(--gold);
+  font-size: clamp(0.6rem, 0.95vw, 0.72rem); color: var(--text-secondary); line-height: 1.5;
+}
+
+.heatmap-wrap { margin-top: 0.6rem; position: relative; z-index: 2; width: 100%; max-width: 1100px; }
+.heatmap-label {
+  font-size: clamp(0.6rem, 1vw, 0.72rem); color: var(--text-muted);
+  margin-bottom: 0.3rem; letter-spacing: 0.08em;
+}
+.heatmap-grid {
+  display: flex; flex-wrap: wrap; gap: 4px;
+}
+.hm-cell {
+  width: clamp(22px, 2.5vw, 32px); height: clamp(22px, 2.5vw, 32px);
+  border-radius: 3px; position: relative; cursor: default;
+  transition: transform 0.2s;
+}
+.hm-cell:hover { transform: scale(1.2); }
+
+/* ─── Slide 6 ─── */
+.metrics-row {
+  display: flex; gap: clamp(1.5rem, 3vw, 3rem);
+  width: 100%; max-width: 1100px; position: relative; z-index: 2;
+}
+.metric-card {
+  flex: 1; text-align: center;
+  padding: clamp(1.2rem, 3vw, 2rem) clamp(1rem, 2vw, 1.5rem);
+  background: rgba(6,15,30,0.8);
+  border: 1px solid var(--border); border-radius: 10px;
+  position: relative; overflow: hidden;
+  transition: border-color 0.3s, transform 0.3s;
+}
+.metric-card:hover { border-color: var(--border-bright); transform: translateY(-4px); }
+.metric-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+}
+.metric-number {
+  font-size: clamp(2rem, 5vw, 4rem);
+  font-weight: 900;
+  background: linear-gradient(135deg, var(--gold-light), var(--amber));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  line-height: 1;
+}
+.metric-unit { font-size: clamp(0.85rem, 1.5vw, 1.1rem); color: var(--gold); margin-bottom: 0.6rem; }
+.metric-title { font-size: clamp(0.75rem, 1.3vw, 0.95rem); font-weight: 700; color: var(--text-primary); margin-bottom: 0.4rem; }
+.metric-desc { font-size: clamp(0.65rem, 1.1vw, 0.8rem); color: var(--text-secondary); line-height: 1.5; }
+
+/* ─── Slide 7: Policy ─── */
+.policy-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: clamp(0.8rem, 1.5vw, 1.5rem);
+  width: 100%; max-width: 1000px; position: relative; z-index: 2;
+}
+.policy-card {
+  background: rgba(6,15,30,0.85);
+  border: 1px solid var(--border); border-radius: 8px;
+  padding: clamp(0.9rem, 2vw, 1.4rem);
+  transition: border-color 0.3s, transform 0.3s;
+}
+.policy-card:hover { border-color: var(--border-bright); transform: translateY(-2px); }
+.policy-icon { font-size: clamp(1.2rem, 2.5vw, 1.8rem); margin-bottom: 0.4rem; }
+.policy-name { font-size: clamp(0.72rem, 1.2vw, 0.9rem); font-weight: 700; color: var(--gold); margin-bottom: 0.35rem; letter-spacing: 0.05em; }
+.policy-desc { font-size: clamp(0.65rem, 1.05vw, 0.78rem); color: var(--text-secondary); line-height: 1.55; }
+.policy-cta {
+  text-align: center; margin-top: clamp(0.8rem, 1.5vh, 1.2rem);
+  font-size: clamp(0.85rem, 1.6vw, 1.2rem);
+  font-weight: 700; color: var(--gold-light);
+  letter-spacing: 0.05em;
+  position: relative; z-index: 2;
+}
+
+/* ─── Slide 8: Phase 2 ─── */
+.phase2-grid {
+  display: flex; flex-wrap: wrap; gap: clamp(0.8rem, 1.5vw, 1.2rem);
+  justify-content: center; align-items: stretch;
+  width: 100%; max-width: 1000px; position: relative; z-index: 2;
+}
+.phase2-card {
+  background: rgba(6,15,30,0.6);
+  border: 1px solid rgba(212,168,67,0.12);
+  border-radius: 8px;
+  padding: clamp(0.8rem, 2vw, 1.2rem) clamp(1rem, 2.5vw, 1.6rem);
+  width: calc(50% - 0.6rem);
+  filter: blur(0px);
+  position: relative; overflow: hidden;
+}
+.phase2-card::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: rgba(2,8,16,0.45);
+  border-radius: 8px;
+  pointer-events: none;
+}
+.phase2-icon { font-size: clamp(1.2rem, 2vw, 1.6rem); margin-bottom: 0.4rem; filter: opacity(0.6); }
+.phase2-name { font-size: clamp(0.72rem, 1.2vw, 0.9rem); font-weight: 700; color: rgba(212,168,67,0.6); margin-bottom: 0.3rem; }
+.phase2-desc { font-size: clamp(0.62rem, 1vw, 0.75rem); color: rgba(168,180,200,0.5); line-height: 1.5; }
+.phase2-note {
+  font-size: clamp(0.65rem, 1.1vw, 0.8rem);
+  color: var(--text-muted); text-align: center;
+  margin-top: clamp(0.6rem, 1.2vh, 1rem);
+  font-style: italic;
+  position: relative; z-index: 2;
+}
+
+/* ─── Slide 9: CTA ─── */
+#s9 .cta-title {
+  font-size: clamp(2rem, 6vw, 5rem);
+  font-weight: 900;
+  background: linear-gradient(135deg, #F5E6B0, var(--gold), var(--amber));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  margin-bottom: 1rem; text-align: center; position: relative; z-index: 2;
+}
+#s9 .cta-sub {
+  font-size: clamp(0.85rem, 1.8vw, 1.3rem);
+  color: var(--text-secondary); text-align: center;
+  max-width: 700px; line-height: 1.7;
+  margin-bottom: clamp(1.5rem, 3vh, 2.5rem);
+  position: relative; z-index: 2;
+}
+.cta-buttons { display: flex; gap: 1.5rem; justify-content: center; position: relative; z-index: 2; }
+.btn-primary {
+  padding: 0.75rem 2.2rem;
+  background: linear-gradient(135deg, var(--gold), var(--amber));
+  color: #020810; font-weight: 800;
+  font-size: clamp(0.78rem, 1.3vw, 0.95rem);
+  border: none; border-radius: 4px; cursor: pointer;
+  letter-spacing: 0.08em;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 0 20px rgba(212,168,67,0.3);
+}
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 0 30px rgba(212,168,67,0.5); }
+.btn-secondary {
+  padding: 0.75rem 2.2rem;
+  background: transparent;
+  color: var(--gold); font-weight: 700;
+  font-size: clamp(0.78rem, 1.3vw, 0.95rem);
+  border: 1px solid var(--border-bright); border-radius: 4px; cursor: pointer;
+  letter-spacing: 0.08em;
+  transition: background 0.2s, transform 0.2s;
+}
+.btn-secondary:hover { background: var(--gold-dim); transform: translateY(-2px); }
+#s9 .cta-footer {
+  margin-top: clamp(1.5rem, 3vh, 2.5rem);
+  font-size: clamp(0.7rem, 1.1vw, 0.82rem);
+  color: var(--text-muted); letter-spacing: 0.15em;
+  position: relative; z-index: 2;
+}
+
+/* ─── Navigation ─── */
+.nav {
+  position: fixed; bottom: clamp(1rem, 2.5vh, 2rem); right: clamp(1.5rem, 3vw, 3rem);
+  z-index: 100; display: flex; gap: 0.8rem; align-items: center;
+}
+.nav-btn {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: rgba(10,22,40,0.8); border: 1px solid var(--border);
+  color: var(--text-secondary); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.9rem; transition: all 0.2s;
+  backdrop-filter: blur(4px);
+}
+.nav-btn:hover { border-color: var(--gold); color: var(--gold); background: rgba(212,168,67,0.1); }
+.page-indicator {
+  font-size: 0.72rem; color: var(--text-muted); letter-spacing: 0.1em;
+  min-width: 40px; text-align: center;
+}
+.page-indicator span { color: var(--gold); }
+
+/* ─── Top brand strip ─── */
+.brand-strip {
+  position: fixed; top: 0; left: 0; right: 0;
+  height: 3px; z-index: 100;
+  background: linear-gradient(90deg, transparent, var(--gold), var(--amber), var(--gold), transparent);
+}
+.slide-brand {
+  position: fixed; top: clamp(0.8rem, 2vh, 1.5rem); left: clamp(1.5rem, 3vw, 3rem);
+  z-index: 50; font-size: clamp(0.6rem, 1vw, 0.75rem);
+  color: var(--text-muted); letter-spacing: 0.2em; text-transform: uppercase;
+}
+.slide-brand em { color: var(--gold); font-style: normal; }
+
+/* ─── Progress bar ─── */
+.progress-bar {
+  position: fixed; bottom: 0; left: 0; height: 2px; z-index: 100;
+  background: linear-gradient(90deg, var(--gold), var(--amber));
+  transition: width 0.4s ease;
+}
+
+/* ─── Reveal animation classes ─── */
+.reveal { opacity: 0; transform: translateY(16px); transition: opacity 0.5s ease, transform 0.5s ease; }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+.reveal-delay-1 { transition-delay: 0.1s; }
+.reveal-delay-2 { transition-delay: 0.2s; }
+.reveal-delay-3 { transition-delay: 0.3s; }
+.reveal-delay-4 { transition-delay: 0.4s; }
+.reveal-delay-5 { transition-delay: 0.5s; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+
+/* ─── Utility ─── */
+.w-full { width: 100%; max-width: 1100px; }
+.text-center { text-align: center; }
+.z2 { position: relative; z-index: 2; }
+</style>
+</head>
+<body>
+
+<div class="bg-base"></div>
+<div class="grid-lines"></div>
+<div class="brand-strip"></div>
+<div class="slide-brand"><em>AEGIS</em> 音乐大模型</div>
+<div class="progress-bar" id="progressBar"></div>
+
+<!-- Floating notes -->
+<div class="notes-bg" id="notesContainer"></div>
+
+<main class="deck" id="deck">
+
+  <!-- ═══════════════════════════════ SLIDE 1: Cover ═══════════════════════════════ -->
+  <section class="slide" id="s1" data-slide="1">
+    <div class="waveform-bg" id="waveformBg"></div>
+    <div class="cover-inner">
+      <div class="cover-title reveal">让每一个学生<br>都拥有属于自己的<br>AI 作曲家</div>
+      <div class="cover-sub reveal reveal-delay-2">省级示范大学音乐学院 · 智慧音乐教室建设方案</div>
+      <div class="cover-brand reveal reveal-delay-3"><span>AEGIS</span> 音乐大模型 &nbsp;|&nbsp; 2026</div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════ SLIDE 2: Pain Points ═══════════════════════════════ -->
+  <section class="slide" id="s2" data-slide="2">
+    <div class="slide-title reveal">传统音乐教育，正在被这个时代甩在后面</div>
+    <div class="cards-row">
+      <div class="card reveal reveal-delay-1">
+        <div class="card-icon">📋</div>
+        <div class="card-label">作业批改效率低</div>
+        <div class="card-desc">声乐/作曲作业全靠人耳，一节课 30 人，老师精力有限，反馈往往滞后 1—2 周，学生得不到及时指导。</div>
+      </div>
+      <div class="card reveal reveal-delay-2">
+        <div class="card-icon">🎵</div>
+        <div class="card-label">创作练习缺乏工具</div>
+        <div class="card-desc">学生想作曲、想编曲，但软件门槛极高、硬件乐器有限，大多数练习只能停留在理论层面，无法实践。</div>
+      </div>
+      <div class="card reveal reveal-delay-3">
+        <div class="card-icon">📊</div>
+        <div class="card-label">学习进步难量化</div>
+        <div class="card-desc">音准提升了多少？创作能力增长了多少？教学成果无法量化，难以向学院汇报，也难以获得更多资源支持。</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════ SLIDE 3: Solution Overview ═══════════════════════════════ -->
+  <section class="slide" id="s3" data-slide="3">
+    <div class="slide-title reveal">AEGIS 智慧音乐教室</div>
+    <div class="arch-wrap reveal reveal-delay-1">
+      <div class="arch-col">
+        <div class="arch-col-title">学生端</div>
+        <div class="arch-item">Web 浏览器（电脑）</div>
+        <div class="arch-item">手机 PWA（随时随地）</div>
+        <div class="arch-item">麦克风实时录音</div>
+        <div class="arch-item">作品提交 & 历史查看</div>
+        <div class="arch-item">个人进步报告</div>
+      </div>
+      <div class="arch-col center">
+        <div class="arch-col-title">⚡ AEGIS AI 引擎</div>
+        <div class="arch-item">🎼 音乐智能生成</div>
+        <div class="arch-item">🎤 人声智能分析</div>
+        <div class="arch-item">📁 作品版本管理</div>
+        <div class="arch-item">✅ 批改辅助系统</div>
+        <div class="arch-item">🇨🇳 纯国产架构</div>
+      </div>
+      <div class="arch-col">
+        <div class="arch-col-title">教师端</div>
+        <div class="arch-item">作业批改仪表盘</div>
+        <div class="arch-item">全班进度监控</div>
+        <div class="arch-item">AI 预生成评语</div>
+        <div class="arch-item">优秀作品展示台</div>
+        <div class="arch-item">学期成果导出</div>
+      </div>
+    </div>
+    <div class="arch-bottom reveal reveal-delay-2">
+      国产大模型 &nbsp;·&nbsp; 数据不出境 &nbsp;·&nbsp; 学校自主掌控
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════ SLIDE 4: Feature 1 ═══════════════════════════════ -->
+  <section class="slide" id="s4" data-slide="4" style="justify-content: flex-start; padding-top: clamp(3rem, 7vh, 5rem);">
+    <div class="slide-title reveal" style="margin-bottom: clamp(0.6rem, 1.5vh, 1rem);">功能一：AI 智能作曲工坊</div>
+
+    <!-- Student flow -->
+    <div class="flow-section reveal reveal-delay-1">
+      <div class="flow-label student">🎓 学生操作流程</div>
+      <div class="flow-steps student-flow">
+        <div class="flow-step">
+          <div class="flow-step-num">①</div>
+          <div class="flow-step-text">登录平台</div>
+          <div class="flow-step-sub">账号 / 手机扫码</div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-step-num">②</div>
+          <div class="flow-step-text">输入创作描述</div>
+          <div class="flow-step-sub">例："忧郁的秋天，带古筝意境"</div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-step-num">③</div>
+          <div class="flow-step-text">AEGIS 生成初稿</div>
+          <div class="flow-step-sub">30 秒内完整编曲</div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-step-num">④</div>
+          <div class="flow-step-text">聆听 &amp; 修改</div>
+          <div class="flow-step-sub">调风格 / 结构 / 歌词</div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-step-num">⑤</div>
+          <div class="flow-step-text">保存 &amp; 提交</div>
+          <div class="flow-step-sub">作业自动归档</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Teacher flow -->
+    <div class="flow-section reveal reveal-delay-2">
+      <div class="flow-label teacher">👩‍🏫 教师批改流程</div>
+      <div class="flow-steps teacher-flow">
+        <div class="flow-step">
+          <div class="flow-step-num">①</div>
+          <div class="flow-step-text">打开作业仪表盘</div>
+          <div class="flow-step-sub">全班提交一览</div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-step-num">②</div>
+          <div class="flow-step-text">查看创作轨迹</div>
+          <div class="flow-step-sub">每一稿修改记录可回溯</div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-step-num">③</div>
+          <div class="flow-step-text">AI 预生成评语</div>
+          <div class="flow-step-sub">结构 / 和声 / 创意建议</div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-step-num">④</div>
+          <div class="flow-step-text">一键确认 &amp; 发回</div>
+          <div class="flow-step-sub">学生即时收到反馈</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Highlights -->
+    <div class="highlight-box reveal reveal-delay-3">
+      <div class="highlight-item"><span class="hi">✦</span> 老师看到的是<strong style="color:var(--text-primary)">完整创作过程</strong>，不只是最终成品——可以真正评估学生的创作思维</div>
+      <div class="highlight-item"><span class="hi">✦</span> 支持中国<strong style="color:var(--text-primary)">民族风格</strong>：古筝 · 二胡 · 琵琶 · 笛 · 箫，一键融入现代编曲</div>
+      <div class="highlight-item"><span class="hi">✦</span> 适用课程：<strong style="color:var(--text-primary)">作曲课 · 编曲课 · 创作实践 · 音乐写作</strong></div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════ SLIDE 5: Feature 2 ═══════════════════════════════ -->
+  <section class="slide" id="s5" data-slide="5" style="justify-content: flex-start; padding-top: clamp(3rem, 7vh, 5rem);">
+    <div class="slide-title reveal" style="margin-bottom: clamp(0.6rem, 1.5vh, 1rem);">功能二：人声 AI 训练反馈系统</div>
+    <div class="s5-grid reveal reveal-delay-1">
+      <!-- Left: student steps -->
+      <div>
+        <div class="flow-label student" style="margin-bottom: 0.6rem;">🎓 学生操作</div>
+        <div class="voice-steps">
+          <div class="voice-step">
+            <div class="voice-step-num">①</div>
+            <div class="voice-step-text">对麦克风演唱（浏览器 / 手机均可）</div>
+          </div>
+          <div class="voice-step">
+            <div class="voice-step-num">②</div>
+            <div class="voice-step-text">一键上传录音</div>
+          </div>
+          <div class="voice-step">
+            <div class="voice-step-num">③</div>
+            <div class="voice-step-text">AEGIS 自动分析（约 15 秒）</div>
+          </div>
+          <div class="voice-step">
+            <div class="voice-step-num">④</div>
+            <div class="voice-step-text">查看个人进步分析报告</div>
+          </div>
+        </div>
+      </div>
+      <!-- Right: report mock -->
+      <div>
+        <div class="flow-label teacher" style="margin-bottom: 0.6rem;">📊 分析报告示例</div>
+        <div class="report-card">
+          <div class="report-card-header">🎤 李同学 · 本周演唱分析 · 第 8 周</div>
+          <div class="report-card-body">
+            <div class="report-row">
+              <div class="report-row-label">音准偏差</div>
+              <div class="report-row-val">本周 ±12 音分（上周 ±23）<span class="badge-green"> ✅ 提升 48%</span></div>
+            </div>
+            <div class="report-row">
+              <div class="report-row-label">节拍稳定性</div>
+              <div class="report-row-val">87 分</div>
+            </div>
+            <div class="report-row">
+              <div class="report-row-label">共鸣饱满度</div>
+              <div class="report-row-val">73 分 &nbsp;<span style="color:#F59E0B;font-size:0.85em;">↑ 持续改善中</span></div>
+            </div>
+            <div class="report-row">
+              <div class="report-row-label">换气点问题</div>
+              <div class="report-row-val">发现 3 处需改善</div>
+            </div>
+            <div class="ai-suggest">
+              💡 AI 建议：第 8 小节 "la" 音偏高约 15 音分，建议放松喉部，降半音位置练习 3 遍后再尝试。
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Heatmap -->
+    <div class="heatmap-wrap reveal reveal-delay-2">
+      <div class="heatmap-label">👩‍🏫 教师端 · 全班音准进步热力图（30 人 · 本周）</div>
+      <div class="heatmap-grid" id="heatmapGrid"></div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════ SLIDE 6: Teacher Value ═══════════════════════════════ -->
+  <section class="slide" id="s6" data-slide="6">
+    <div class="slide-title reveal">教师视角：这套系统改变了什么</div>
+    <div class="metrics-row">
+      <div class="metric-card reveal reveal-delay-1">
+        <div class="metric-number">60</div>
+        <div class="metric-unit">% 批改时间节省</div>
+        <div class="metric-title">人机协作批改</div>
+        <div class="metric-desc">AI 预生成评语，老师一键确认或微调即可。从"全手工逐份听"到智能辅助，每份作业只需 30 秒。</div>
+      </div>
+      <div class="metric-card reveal reveal-delay-2">
+        <div class="metric-number" style="font-size: clamp(1.8rem,4vw,3.2rem);">100%</div>
+        <div class="metric-unit">进步可量化</div>
+        <div class="metric-title">数据驱动教学</div>
+        <div class="metric-desc">音准 / 节拍 / 创作力周度趋势图，学期末一键导出教学成果报告，为学院汇报提供有力数据支撑。</div>
+      </div>
+      <div class="metric-card reveal reveal-delay-3">
+        <div class="metric-number" style="font-size: clamp(1.8rem,4vw,3.2rem);">🏆</div>
+        <div class="metric-unit">课堂互动升级</div>
+        <div class="metric-title">作品展示台</div>
+        <div class="metric-desc">优秀学生作品一键推送课堂大屏，激励全班创作热情。期末"班级音乐作品集"自动生成，留存成长记录。</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════ SLIDE 7: Policy ═══════════════════════════════ -->
+  <section class="slide" id="s7" data-slide="7">
+    <div class="slide-title reveal">响应国家战略，打造标志性案例</div>
+    <div class="policy-grid reveal reveal-delay-1">
+      <div class="policy-card">
+        <div class="policy-icon">🏫</div>
+        <div class="policy-name">教育部「智慧教育」专项</div>
+        <div class="policy-desc">人工智能融入课堂是国家明确方向。音乐学院率先在艺术教育领域落地 AI，具有极高示范价值与政策加分项。</div>
+      </div>
+      <div class="policy-card">
+        <div class="policy-icon">🇨🇳</div>
+        <div class="policy-name">国产大模型应用落地</div>
+        <div class="policy-desc">AEGIS 采用纯国产 AI 架构，数据完全不出境，符合《数据安全法》与《个人信息保护法》要求，无合规风险。</div>
+      </div>
+      <div class="policy-card">
+        <div class="policy-icon">🎼</div>
+        <div class="policy-name">中华优秀传统音乐传承</div>
+        <div class="policy-desc">原生支持古筝 · 二胡 · 琵琶等民族乐器风格生成，AI 赋能传统文化，契合"文化自信"政策导向，天然获得支持。</div>
+      </div>
+      <div class="policy-card">
+        <div class="policy-icon">🏆</div>
+        <div class="policy-name">省级示范大学建设要求</div>
+        <div class="policy-desc">率先建成「AI + 音乐教育」标杆案例，为全省院校提供可复制经验，在示范大学建设考核中形成竞争优势。</div>
+      </div>
+    </div>
+    <div class="policy-cta reveal reveal-delay-2">
+      您的学院，可以成为全省第一个 AI 音乐教学示范基地
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════ SLIDE 8: Phase 2 ═══════════════════════════════ -->
+  <section class="slide" id="s8" data-slide="8">
+    <div class="slide-title reveal">这只是第一步……</div>
+    <div class="phase2-grid reveal reveal-delay-1">
+      <div class="phase2-card">
+        <div class="phase2-icon">🤝</div>
+        <div class="phase2-name">多人实时协作作曲</div>
+        <div class="phase2-desc">多名学生同时在线，各自负责一个声部/乐器层，实时合并，听到完整合奏效果</div>
+      </div>
+      <div class="phase2-card">
+        <div class="phase2-icon">📖</div>
+        <div class="phase2-name">乐理智能练习系统</div>
+        <div class="phase2-desc">AI 根据本周课程自动生成听写题、视唱题，学生演唱作答，系统自动判分</div>
+      </div>
+      <div class="phase2-card">
+        <div class="phase2-icon">🎵</div>
+        <div class="phase2-name">哼唱转五线谱</div>
+        <div class="phase2-desc">学生对麦克风哼唱旋律，AEGIS 自动转成五线谱 / 简谱 PDF，随时捕捉创作灵感</div>
+      </div>
+      <div class="phase2-card">
+        <div class="phase2-icon">🗺️</div>
+        <div class="phase2-name">情绪音乐地图</div>
+        <div class="phase2-desc">可视化情感坐标轴，学生点击即可生成对应氛围音乐，用于音乐语言认知训练</div>
+      </div>
+    </div>
+    <div class="phase2-note reveal reveal-delay-2">第一期上线并收集使用数据后，根据老师反馈逐步开放 · 功能持续迭代</div>
+  </section>
+
+  <!-- ═══════════════════════════════ SLIDE 9: CTA ═══════════════════════════════ -->
+  <section class="slide" id="s9" data-slide="9">
+    <div class="notes-bg" id="ctaNotes"></div>
+    <div class="cta-title reveal">我们的 Demo<br>已经就绪</div>
+    <div class="cta-sub reveal reveal-delay-1">
+      30 分钟现场体验，让您亲眼看到学生如何用 AEGIS<br>创作出第一首属于自己的曲子
+    </div>
+    <div class="cta-buttons reveal reveal-delay-2">
+      <button class="btn-primary">📅 预约 Demo 体验</button>
+      <button class="btn-secondary">📄 索取完整方案文档</button>
+    </div>
+    <div class="cta-footer reveal reveal-delay-3">
+      AEGIS 智慧音乐教室 &nbsp;·&nbsp; 让每一堂音乐课都充满可能
+    </div>
+  </section>
+
+</main>
+
+<!-- Navigation -->
+<nav class="nav" role="navigation" aria-label="幻灯片导航">
+  <button class="nav-btn" id="prevBtn" aria-label="上一页">◀</button>
+  <div class="page-indicator"><span id="currentPage">1</span> / 9</div>
+  <button class="nav-btn" id="nextBtn" aria-label="下一页">▶</button>
+</nav>
+
+<script>
+// ─── Waveform Generator ───
+(function() {
+  const container = document.getElementById('waveformBg');
+  const barCount = Math.floor(window.innerWidth / 8);
+  for (let i = 0; i < barCount; i++) {
+    const bar = document.createElement('div');
+    bar.className = 'wave-bar';
+    const minH = 4 + Math.random() * 10;
+    const maxH = 40 + Math.random() * 120;
+    const dur = 0.8 + Math.random() * 2;
+    const delay = Math.random() * 2;
+    bar.style.cssText = `--min-h:${minH}px;--max-h:${maxH}px;--dur:${dur}s;--delay:${delay}s;`;
+    container.appendChild(bar);
+  }
+})();
+
+// ─── Floating Notes Generator ───
+(function() {
+  const notes = ['♩','♪','♫','♬','𝄞','𝄢','♭','♯'];
+  const container = document.getElementById('notesContainer');
+  for (let i = 0; i < 18; i++) {
+    const n = document.createElement('div');
+    n.className = 'note';
+    n.textContent = notes[Math.floor(Math.random() * notes.length)];
+    const left = Math.random() * 100;
+    const dur = 7 + Math.random() * 10;
+    const delay = Math.random() * 12;
+    n.style.cssText = `left:${left}%;--fn-dur:${dur}s;--fn-delay:${delay}s;`;
+    container.appendChild(n);
+  }
+  // CTA notes
+  const ctaContainer = document.getElementById('ctaNotes');
+  for (let i = 0; i < 12; i++) {
+    const n = document.createElement('div');
+    n.className = 'note';
+    n.textContent = notes[Math.floor(Math.random() * notes.length)];
+    const left = Math.random() * 100;
+    const dur = 5 + Math.random() * 8;
+    const delay = Math.random() * 8;
+    n.style.cssText = `left:${left}%;--fn-dur:${dur}s;--fn-delay:${delay}s;font-size:clamp(1rem,2.5vw,2rem);`;
+    ctaContainer.appendChild(n);
+  }
+})();
+
+// ─── Heatmap Generator ───
+(function() {
+  const grid = document.getElementById('heatmapGrid');
+  const names = ['赵','钱','孙','李','周','吴','郑','王','冯','陈','褚','卫','蒋','沈','韩','杨','朱','秦','尤','许','何','吕','施','张','孔','曹','严','华','金','魏'];
+  const progress = [0.9,0.85,0.7,0.95,0.6,0.88,0.75,0.92,0.5,0.82,0.78,0.65,0.91,0.72,0.86,0.58,0.93,0.69,0.77,0.84,0.62,0.88,0.73,0.96,0.55,0.80,0.67,0.89,0.74,0.61];
+  progress.forEach((p, i) => {
+    const cell = document.createElement('div');
+    cell.className = 'hm-cell';
+    const r = Math.round(212 * p);
+    const g = Math.round(168 * p);
+    const b = Math.round(67 * p * 0.4);
+    cell.style.background = `rgb(${r},${g},${b})`;
+    cell.title = `${names[i]}同学：本周进步 ${Math.round(p * 100)}%`;
+    grid.appendChild(cell);
+  });
+})();
+
+// ─── Slide Controller ───
+class SlideController {
+  constructor() {
+    this.slides = Array.from(document.querySelectorAll('.slide'));
+    this.total = this.slides.length;
+    this.current = 0;
+    this.animating = false;
+
+    this.init();
+    this.bindEvents();
+  }
+
+  init() {
+    this.slides[0].classList.add('active');
+    this.triggerReveal(this.slides[0]);
+    this.updateUI();
+  }
+
+  goTo(index) {
+    if (this.animating || index === this.current) return;
+    if (index < 0 || index >= this.total) return;
+
+    this.animating = true;
+    const prev = this.slides[this.current];
+    const next = this.slides[index];
+    const dir = index > this.current ? 1 : -1;
+
+    prev.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+    prev.style.transform = dir > 0 ? 'translateY(-25px)' : 'translateY(25px)';
+    prev.style.opacity = '0';
+
+    setTimeout(() => {
+      prev.classList.remove('active');
+      prev.style.transform = '';
+      prev.style.opacity = '';
+      prev.style.transition = '';
+
+      // Reset reveal elements for next revisit
+      prev.querySelectorAll('.reveal.visible').forEach(el => {
+        el.classList.remove('visible');
+      });
+
+      this.current = index;
+      next.classList.add('active');
+      this.triggerReveal(next);
+      this.updateUI();
+
+      setTimeout(() => { this.animating = false; }, 100);
+    }, 400);
+  }
+
+  triggerReveal(slide) {
+    const els = slide.querySelectorAll('.reveal');
+    els.forEach((el, i) => {
+      setTimeout(() => { el.classList.add('visible'); }, i * 80 + 100);
+    });
+  }
+
+  updateUI() {
+    document.getElementById('currentPage').textContent = this.current + 1;
+    const pct = ((this.current + 1) / this.total) * 100;
+    document.getElementById('progressBar').style.width = pct + '%';
+    document.getElementById('prevBtn').style.opacity = this.current === 0 ? '0.3' : '1';
+    document.getElementById('nextBtn').style.opacity = this.current === this.total - 1 ? '0.3' : '1';
+  }
+
+  bindEvents() {
+    document.getElementById('prevBtn').addEventListener('click', () => this.goTo(this.current - 1));
+    document.getElementById('nextBtn').addEventListener('click', () => this.goTo(this.current + 1));
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ') {
+        e.preventDefault(); this.goTo(this.current + 1);
+      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp' || e.key === 'PageUp') {
+        e.preventDefault(); this.goTo(this.current - 1);
+      }
+    });
+
+    // Touch / swipe
+    let touchStartX = 0, touchStartY = 0;
+    document.addEventListener('touchstart', (e) => {
+      touchStartX = e.changedTouches[0].clientX;
+      touchStartY = e.changedTouches[0].clientY;
+    }, { passive: true });
+    document.addEventListener('touchend', (e) => {
+      const dx = touchStartX - e.changedTouches[0].clientX;
+      const dy = touchStartY - e.changedTouches[0].clientY;
+      if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 50) {
+        dx > 0 ? this.goTo(this.current + 1) : this.goTo(this.current - 1);
+      }
+    }, { passive: true });
+
+    // Mouse wheel
+    let wheelLock = false;
+    document.addEventListener('wheel', (e) => {
+      if (wheelLock) return;
+      wheelLock = true;
+      e.deltaY > 0 ? this.goTo(this.current + 1) : this.goTo(this.current - 1);
+      setTimeout(() => { wheelLock = false; }, 800);
+    }, { passive: true });
+  }
+}
+
+// Start
+window.addEventListener('DOMContentLoaded', () => { new SlideController(); });
+</script>
+</body>
+</html>
