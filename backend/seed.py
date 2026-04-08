@@ -32,7 +32,7 @@ DEMO_TRACKS = [
         "prompt": "忧郁的秋天，带古筝和箫的意境，思念远方的故人",
         "style": "古风 民族 忧郁",
         "lyrics": "秋风吹过古道边，黄叶飘零无人见",
-        "audio_url": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+        "audio_url": "https://cdn1.suno.ai/c185e44b-3263-4900-9de5-5005d25082eb.mp3",
         "status": "done", "submitted": 1
     },
     {
@@ -40,7 +40,7 @@ DEMO_TRACKS = [
         "prompt": "忧郁的秋天，古筝主旋律更突出，加入低沉鼓点",
         "style": "古风 民族 忧郁 鼓点",
         "lyrics": "秋风吹过古道边，黄叶飘零无人见，鼓声阵阵入云霄",
-        "audio_url": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
+        "audio_url": "https://cdn1.suno.ai/2c6b68a4-7a80-4a33-8e71-6cfd93222c23.mp3",
         "status": "done", "submitted": 1
     },
 ]

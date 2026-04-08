@@ -9,7 +9,15 @@ from pathlib import Path
 from curl_cffi.requests import AsyncSession
 
 PROVIDER  = os.getenv("SUNO_PROVIDER", "browser")
-MOCK_URL  = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
+# Mock URLs 使用 Suno CDN（有 CORS: Access-Control-Allow-Origin: *）
+# 这些是真实生成的曲目，浏览器可以直接播放
+MOCK_URLS = [
+    "https://cdn1.suno.ai/c185e44b-3263-4900-9de5-5005d25082eb.mp3",  # 故人寄秋声 古风
+    "https://cdn1.suno.ai/2c6b68a4-7a80-4a33-8e71-6cfd93222c23.mp3",  # 枯叶过桥 古风
+    "https://cdn1.suno.ai/8d6b2ff1-2d71-410d-91d4-08c92e656d5f.mp3",  # 秋意 古风
+]
+import random
+MOCK_URL = MOCK_URLS[0]
 AUTH_FILE = Path(__file__).parent.parent / "suno_auth.json"
 
 BASE_URL  = "https://studio-api-prod.suno.com"
@@ -161,7 +169,7 @@ def get_token() -> str:
 async def generate_music(prompt: str, style: str = "", lyrics: str = "") -> dict:
     if PROVIDER == "mock":
         await asyncio.sleep(2)
-        return {"audio_url": MOCK_URL, "task_id": "mock-001"}
+        return {"audio_url": random.choice(MOCK_URLS), "task_id": "mock-001", "title": ""}
     if PROVIDER == "goapi":
         return await _goapi_generate(prompt, style, lyrics)
     return await _direct_generate(prompt, style, lyrics)
